@@ -2,147 +2,137 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
+import { generateInstagramCaption } from '../../../services/geminiService';
 
 const SocialMediaTab = () => {
-  const [selectedPlatform, setSelectedPlatform] = useState('facebook');
+  const [language, setLanguage] = useState('english');
+  const [description, setDescription] = useState('');
+  const [style, setStyle] = useState('engaging');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCaptions, setGeneratedCaptions] = useState({});
+  const [generatedContent, setGeneratedContent] = useState(null);
+  const [error, setError] = useState(null);
 
-  const platformOptions = [
-    { value: 'facebook', label: 'Facebook' },
-    { value: 'instagram', label: 'Instagram' },
-    { value: 'twitter', label: 'Twitter/X' },
-    { value: 'linkedin', label: 'LinkedIn' }
+  const languageOptions = [
+    { value: 'english', label: 'English' },
+    { value: 'hindi', label: 'Hindi (हिंदी)' }
   ];
 
-  const mockCaptions = {
-    facebook: {
-      caption: `🎉 Join us for the Annual Tech Conference 2025! 🚀\n\nWe're excited to announce our biggest tech event of the year, happening on March 15th at the Grand Convention Center!\n\n✨ What to expect:\n• Inspiring keynote speakers\n• Interactive workshops\n• Amazing networking opportunities\n• Latest tech innovations\n\nDon't miss out on this incredible opportunity to connect with industry leaders and discover the future of technology!\n\n📅 March 15th, 2025\n📍 Grand Convention Center\n⏰ 9:00 AM - 6:00 PM\n\nRegister now! Link in bio 👆\n\n#TechConference2025 #Innovation #Technology #Networking #TechEvent #Conference #SmartEventPlanner`,
-      characterCount: 487,
-      hashtags: ['#TechConference2025', '#Innovation', '#Technology', '#Networking', '#TechEvent', '#Conference', '#SmartEventPlanner']
-    },
-    instagram: {
-      caption: `✨ TECH CONFERENCE 2025 ✨\n\nReady to level up your tech game? Join us for an unforgettable day of innovation! 🚀\n\n📸 Swipe to see what's waiting for you:\n• Mind-blowing keynotes\n• Hands-on workshops\n• Epic networking\n• Future tech demos\n\n📅 March 15th\n📍 Grand Convention Center\n⏰ 9AM-6PM\n\nTag a friend who needs to be there! 👥\nLink in bio for tickets 🎫\n\n#TechConf2025 #Innovation #TechLife #Networking #Conference #TechCommunity #FutureIsNow #SmartEvents`,
-      characterCount: 398,
-      hashtags: ['#TechConf2025', '#Innovation', '#TechLife', '#Networking', '#Conference', '#TechCommunity', '#FutureIsNow', '#SmartEvents']
-    },
-    twitter: {
-      caption: `🚀 TECH CONFERENCE 2025 is here!\n\nJoin industry leaders on March 15th for:\n✅ Keynote speakers\n✅ Interactive workshops  \n✅ Networking sessions\n✅ Tech innovations\n\n📍 Grand Convention Center\n⏰ 9AM-6PM\n\nRegister now! 🎫\n\n#TechConf2025 #Innovation #Tech #Networking`,
-      characterCount: 234,
-      hashtags: ['#TechConf2025', '#Innovation', '#Tech', '#Networking']
-    },
-    linkedin: {
-      caption: `Excited to announce the Annual Tech Conference 2025! 🎯\n\nAs professionals in the technology sector, we understand the importance of staying ahead of industry trends and building meaningful connections.\n\nJoin us on March 15th, 2025, at the Grand Convention Center for:\n\n🔹 Keynote presentations from industry thought leaders\n🔹 Interactive workshops on emerging technologies\n🔹 Strategic networking opportunities\n🔹 Exhibitions of cutting-edge innovations\n\nThis conference is designed for:\n• Technology professionals\n• Startup founders\n• Product managers\n• Software developers\n• Digital transformation leaders\n\nInvestment in professional development is investment in your career growth.\n\nRegister today and secure your spot at this premier technology event.\n\n#TechConference2025 #ProfessionalDevelopment #Technology #Innovation #Networking #CareerGrowth #TechLeadership`,
-      characterCount: 756,
-      hashtags: ['#TechConference2025', '#ProfessionalDevelopment', '#Technology', '#Innovation', '#Networking', '#CareerGrowth', '#TechLeadership']
-    }
-  };
-
-  const getPlatformIcon = (platform) => {
-    switch (platform) {
-      case 'facebook': return 'Facebook';
-      case 'instagram': return 'Instagram';
-      case 'twitter': return 'Twitter';
-      case 'linkedin': return 'Linkedin';
-      default: return 'Share2';
-    }
-  };
-
-  const getPlatformColor = (platform) => {
-    switch (platform) {
-      case 'facebook': return 'text-blue-600';
-      case 'instagram': return 'text-pink-600';
-      case 'twitter': return 'text-blue-400';
-      case 'linkedin': return 'text-blue-700';
-      default: return 'text-primary';
-    }
-  };
-
-  const getCharacterLimit = (platform) => {
-    switch (platform) {
-      case 'twitter': return 280;
-      case 'instagram': return 2200;
-      case 'facebook': return 63206;
-      case 'linkedin': return 3000;
-      default: return 280;
-    }
-  };
+  const styleOptions = [
+    { value: 'engaging', label: 'Engaging & Fun' },
+    { value: 'professional', label: 'Professional' },
+    { value: 'casual', label: 'Casual & Friendly' },
+    { value: 'promotional', label: 'Promotional' }
+  ];
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    
-    // Simulate AI generation delay
-    setTimeout(() => {
-      const content = mockCaptions?.[selectedPlatform];
-      setGeneratedCaptions({
-        ...generatedCaptions,
-        [selectedPlatform]: content
-      });
-      setIsGenerating(false);
-    }, 2000);
-  };
+    if (!description.trim()) {
+      setError('Please enter an event description');
+      return;
+    }
 
-  const handleCopyCaption = (platform) => {
-    const content = generatedCaptions?.[platform];
-    if (content) {
-      navigator.clipboard?.writeText(content?.caption);
-      alert('Caption copied to clipboard!');
+    setIsGenerating(true);
+    setError(null);
+    
+    try {
+      const result = await generateInstagramCaption(description, language, style);
+      
+      if (result.success) {
+        setGeneratedContent(result.data.instagramCaption);
+      } else {
+        setError('Failed to generate caption. Please try again.');
+      }
+    } catch (error) {
+      console.error('Caption generation failed:', error);
+      setError('Failed to generate caption. Please check your connection.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  const currentCaption = generatedCaptions?.[selectedPlatform];
-  const characterLimit = getCharacterLimit(selectedPlatform);
+  const handleCopyContent = () => {
+    if (generatedContent) {
+      navigator.clipboard.writeText(generatedContent);
+      alert('Instagram caption copied to clipboard!');
+    }
+  };
+
+  const handleEdit = (e) => {
+    setGeneratedContent(e.target.value);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Platform Selection */}
+      {/* Generation Controls */}
       <div className="bg-card rounded-lg border border-border p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-          <Icon name="Share2" size={20} className="mr-2 text-primary" />
-          Social Media Caption Generator
+          <Icon name="Instagram" size={20} className="mr-2 text-pink-600" />
+          AI Instagram Caption Generator
         </h3>
         
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div className="flex-1">
+        <div className="space-y-4">
+          {/* Language and Style Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              label="Select Platform"
-              options={platformOptions}
-              value={selectedPlatform}
-              onChange={setSelectedPlatform}
+              label="Language"
+              options={languageOptions}
+              value={language}
+              onChange={setLanguage}
+            />
+            <Select
+              label="Caption Style"
+              options={styleOptions}
+              value={style}
+              onChange={setStyle}
             />
           </div>
-          
+
+          {/* Event Description */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Event Description <span className="text-error">*</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your event for Instagram...\n\nFor example:\n- Event name and theme\n- Key highlights\n- Date and location\n- Who should attend\n- Special features or activities\n\nSupports English and Hindi!"
+              className="w-full h-40 px-4 py-3 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
+              data-testid="instagram-description-input"
+            />
+            {error && (
+              <p className="text-sm text-error mt-1">{error}</p>
+            )}
+          </div>
+
           <Button
             onClick={handleGenerate}
             loading={isGenerating}
             iconName="Sparkles"
             iconPosition="left"
+            className="w-full md:w-auto"
+            disabled={!description.trim()}
+            data-testid="generate-caption-btn"
           >
-            {isGenerating ? 'Generating...' : 'Generate Caption'}
+            {isGenerating ? 'Generating Caption...' : 'Generate Instagram Caption'}
           </Button>
         </div>
       </div>
+
       {/* Generated Caption */}
-      {currentCaption && (
+      {generatedContent && (
         <div className="bg-card rounded-lg border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Icon 
-                name={getPlatformIcon(selectedPlatform)} 
-                size={20} 
-                className={getPlatformColor(selectedPlatform)} 
-              />
-              <h3 className="text-lg font-semibold text-foreground capitalize">
-                {selectedPlatform} Caption
-              </h3>
-            </div>
+            <h3 className="text-lg font-semibold text-foreground flex items-center">
+              <Icon name="CheckCircle2" size={20} className="mr-2 text-success" />
+              Generated Caption
+            </h3>
             <div className="flex space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleCopyCaption(selectedPlatform)}
+                onClick={handleCopyContent}
                 iconName="Copy"
                 iconPosition="left"
+                data-testid="copy-caption-btn"
               >
                 Copy
               </Button>
@@ -152,93 +142,126 @@ const SocialMediaTab = () => {
                 onClick={handleGenerate}
                 iconName="RefreshCw"
                 iconPosition="left"
+                data-testid="regenerate-caption-btn"
               >
                 Regenerate
               </Button>
             </div>
           </div>
 
-          {/* Caption Preview */}
-          <div className="bg-muted rounded-lg p-4 mb-4">
-            <div className="whitespace-pre-line text-sm text-foreground leading-relaxed">
-              {currentCaption?.caption}
-            </div>
-          </div>
-
-          {/* Character Count */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-muted-foreground">
-                Characters: <span className={`font-medium ${currentCaption?.characterCount > characterLimit ? 'text-error' : 'text-success'}`}>
-                  {currentCaption?.characterCount}
-                </span>/{characterLimit}
+          {/* Editable Caption Preview */}
+          <div className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-1 border border-border/50">
+              <div className="text-xs text-muted-foreground px-3 py-2 flex items-center">
+                <Icon name="Info" size={14} className="mr-1" />
+                You can edit the caption below before copying to Instagram
               </div>
-              {currentCaption?.characterCount > characterLimit && (
-                <div className="flex items-center space-x-1 text-error text-xs">
-                  <Icon name="AlertTriangle" size={12} />
-                  <span>Exceeds limit</span>
-                </div>
+            </div>
+
+            <textarea
+              value={generatedContent}
+              onChange={handleEdit}
+              className="w-full h-80 px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground leading-relaxed resize-y"
+              data-testid="caption-preview-textarea"
+            />
+
+            {/* Character Count */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Characters: {generatedContent.length} / 2200</span>
+              {generatedContent.length > 2200 && (
+                <span className="text-error flex items-center">
+                  <Icon name="AlertTriangle" size={12} className="mr-1" />
+                  Exceeds Instagram limit
+                </span>
               )}
             </div>
           </div>
 
-          {/* Hashtags */}
-          <div className="border-t border-border pt-4">
-            <h4 className="text-sm font-medium text-foreground mb-2">Suggested Hashtags:</h4>
-            <div className="flex flex-wrap gap-2">
-              {currentCaption?.hashtags?.map((hashtag, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary text-xs rounded-md cursor-pointer hover:bg-primary/20 transition-colors"
-                  onClick={() => navigator.clipboard?.writeText(hashtag)}
-                >
-                  {hashtag}
-                </span>
-              ))}
-            </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button
+              onClick={handleCopyContent}
+              iconName="Copy"
+              iconPosition="left"
+              data-testid="copy-caption-final-btn"
+            >
+              Copy to Clipboard
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Share to Instagram (opens Instagram if on mobile)
+                const text = encodeURIComponent(generatedContent);
+                window.open(`https://www.instagram.com/`, '_blank');
+              }}
+              iconName="Instagram"
+              iconPosition="left"
+            >
+              Open Instagram
+            </Button>
           </div>
         </div>
       )}
-      {/* Platform Guidelines */}
+
+      {/* Platform Tips */}
       <div className="bg-card rounded-lg border border-border p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Platform Guidelines</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Icon name="Facebook" size={16} className="text-blue-600" />
-              <span className="text-sm font-medium">Facebook</span>
-              <span className="text-xs text-muted-foreground">Up to 63,206 chars</span>
+        <h3 className="text-lg font-semibold text-foreground mb-4">Instagram Tips</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="space-y-2">
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Use emojis to increase engagement</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Icon name="Instagram" size={16} className="text-pink-600" />
-              <span className="text-sm font-medium">Instagram</span>
-              <span className="text-xs text-muted-foreground">Up to 2,200 chars</span>
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Include 15-20 relevant hashtags</span>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Add a clear call-to-action</span>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Icon name="Twitter" size={16} className="text-blue-400" />
-              <span className="text-sm font-medium">Twitter/X</span>
-              <span className="text-xs text-muted-foreground">Up to 280 chars</span>
+          <div className="space-y-2">
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Keep captions under 2200 characters</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Icon name="Linkedin" size={16} className="text-blue-700" />
-              <span className="text-sm font-medium">LinkedIn</span>
-              <span className="text-xs text-muted-foreground">Up to 3,000 chars</span>
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Tag relevant accounts and locations</span>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Icon name="Check" size={16} className="text-success mt-0.5" />
+              <span className="text-foreground">Post at optimal engagement times</span>
             </div>
           </div>
         </div>
       </div>
+
       {/* Empty State */}
-      {!currentCaption && !isGenerating && (
+      {!generatedContent && !isGenerating && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon name="Share2" size={24} className="text-muted-foreground" />
+          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Instagram" size={24} className="text-pink-600" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No Caption Generated Yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Select your platform and click generate to create engaging social media content.
+          <h3 className="text-lg font-medium text-foreground mb-2">Create Engaging Instagram Captions</h3>
+          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+            Describe your event and let AI create engaging Instagram captions with emojis and hashtags!
           </p>
+          <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
+            <div className="flex items-center">
+              <Icon name="Sparkles" size={14} className="mr-1 text-primary" />
+              AI-Powered
+            </div>
+            <div className="flex items-center">
+              <Icon name="Hash" size={14} className="mr-1 text-primary" />
+              With Hashtags
+            </div>
+            <div className="flex items-center">
+              <Icon name="Smile" size={14} className="mr-1 text-primary" />
+              Emojis Included
+            </div>
+          </div>
         </div>
       )}
     </div>

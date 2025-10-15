@@ -4,6 +4,12 @@ import Icon from '../../../components/AppIcon';
 const TabNavigation = ({ activeTab, onTabChange }) => {
   const tabs = [
     {
+      id: 'eventplan',
+      label: 'Event Plan',
+      icon: 'Calendar',
+      description: 'AI-generated event plans'
+    },
+    {
       id: 'email',
       label: 'Email Invitations',
       icon: 'Mail',

@@ -4,12 +4,13 @@ import QuickActionButton from '../../components/ui/QuickActionButton';
 import NotificationToast, { useNotifications } from '../../components/ui/NotificationToast';
 import MaterialsHeader from './components/MaterialsHeader';
 import TabNavigation from './components/TabNavigation';
+import EventPlanTab from './components/EventPlanTab';
 import EmailInvitationTab from './components/EmailInvitationTab';
 import SocialMediaTab from './components/SocialMediaTab';
 import VisualAssetsTab from './components/VisualAssetsTab';
 
 const MarketingMaterials = () => {
-  const [activeTab, setActiveTab] = useState('email');
+  const [activeTab, setActiveTab] = useState('eventplan');
   const { 
     notifications, 
     showSuccess, 
@@ -26,6 +27,7 @@ const MarketingMaterials = () => {
 
   const getTabName = (tabId) => {
     switch (tabId) {
+      case 'eventplan': return 'Event Plan';
       case 'email': return 'Email Invitations';
       case 'social': return 'Social Media';
       case 'visual': return 'Visual Assets';
@@ -72,6 +74,8 @@ const MarketingMaterials = () => {
 
   const renderActiveTab = () => {
     switch (activeTab) {
+      case 'eventplan':
+        return <EventPlanTab />;
       case 'email':
         return <EmailInvitationTab />;
       case 'social':
@@ -79,7 +83,7 @@ const MarketingMaterials = () => {
       case 'visual':
         return <VisualAssetsTab />;
       default:
-        return <EmailInvitationTab />;
+        return <EventPlanTab />;
     }
   };
 
@@ -105,7 +109,7 @@ const MarketingMaterials = () => {
           {/* Mobile Tab Navigation (Accordion Style) */}
           <div className="sm:hidden mt-8">
             <div className="bg-card rounded-lg border border-border overflow-hidden">
-              {['email', 'social', 'visual']?.map((tabId) => (
+              {['eventplan', 'email', 'social', 'visual']?.map((tabId) => (
                 <div key={tabId} className="border-b border-border last:border-b-0">
                   <button
                     onClick={() => handleTabChange(tabId)}
