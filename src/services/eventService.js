@@ -1,6 +1,26 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    if (hostname.includes('.replit.dev') || hostname.includes('.repl.co')) {
+      const parts = hostname.split('.');
+      const suffix = parts.slice(1).join('.');
+      return `${protocol}//3000-${parts[0]}.${suffix}/api`;
+    }
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:3000/api`;
+    }
+    
+    return `${protocol}//${hostname}:3000/api`;
+  }
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class EventService {
   constructor() {
